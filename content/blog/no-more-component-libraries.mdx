@@ -1,0 +1,402 @@
+---
+title: "The Last Component Library You'll Ever Install"
+description: "In the AI era, shipping your own components isn't extra work anymore. It's the better choice — for bundle size, ownership, accessibility, and control."
+date: "2026-05-10"
+category: "Architecture"
+tags: ["AI", "Components", "Accessibility", "React", "Architecture", "Dependencies"]
+readTime: "12 min read"
+author: "Aron"
+featured: true
+---
+
+There's a specific kind of frustration that only frontend engineers know.
+
+You're three hours into what should have been a simple UI change. You need a dropdown to close when you click outside of it, but also trap focus when it's open, but also not fight with the z-index stack of the modal behind it, but also match the design system. You're deep in a component library's GitHub issues, reading a thread from 2022 where someone has the exact same problem, and the maintainer said "fix coming in the next major" and then the thread went quiet.
+
+You added this dependency to *avoid* this kind of afternoon.
+
+Here's the thing: that bargain made sense five years ago. It doesn't anymore.
+
+---
+
+## What component libraries actually solved
+
+Let's be honest about why we reached for them in the first place. It wasn't laziness — it was a real problem.
+
+Building an accessible combobox from scratch is genuinely hard. Focus management, keyboard navigation, WAI-ARIA patterns, screen reader announcements, pointer vs. keyboard interaction differences — none of this is obvious, and all of it matters. The W3C ARIA Authoring Practices Guide for a combobox alone runs to several thousand words. Getting it wrong means you're shipping a component that's unusable for a non-trivial percentage of your users.
+
+So we made a deal: accept the constraints of a third-party library in exchange for not having to solve these problems ourselves.
+
+The deal made sense. The problems were hard, the solutions were battle-tested, and the cost seemed manageable.
+
+<Quote author="Rich Harris, creator of Svelte">
+Every dependency you add is a bet that the authors' interests will continue to align with yours.
+</Quote>
+
+The cost turned out to be higher than it looked.
+
+---
+
+## What the deal actually costs
+
+**Bundle size.** MUI ships around 300kb minified before you touch a single component. Even the leaner options carry overhead you didn't ask for: the variant system for components you'll never use, the theming infrastructure, the peer dependency chain.
+
+**Version entropy.** Your design system is on v5. A new hire installs a package that pins v4. Now you have two copies of the same library. Both work. Neither is quite right. Upgrading either one is a project.
+
+**Fighting the abstraction.** The library was designed for the general case. Your case is specific. You need the Select to render in a portal. You need the Dialog to accept an external `open` state. You need the Tooltip to use your own transition. Every customization is a negotiation with someone else's API design, and sometimes the API just doesn't expose what you need.
+
+**Lock-in.** When the library makes a breaking change — and they all do — you own the migration. Every component that touches it needs updating. This isn't theoretical; it happens every 18 months or so, and it always takes longer than the estimate.
+
+<ProCon
+  prosTitle="Why we used them"
+  pros={[
+    "Accessibility handled out of the box",
+    "Keyboard navigation, focus management, ARIA — solved",
+    "Faster initial shipping, especially for prototypes",
+    "Community-tested across many browsers and assistive technologies"
+  ]}
+  consTitle="What they actually cost"
+  cons={[
+    "Bundle weight from features you'll never use",
+    "Version conflicts grow as the dependency tree grows",
+    "Customization means fighting the library's own abstractions",
+    "Breaking changes on someone else's schedule, not yours",
+    "The component does 80% of what you want, and the other 20% is very hard"
+  ]}
+/>
+
+For a long time, the pros outweighed the cons. What changed is that the core value proposition — you don't have to solve the hard accessibility and interaction problems — is no longer exclusive to third-party libraries.
+
+---
+
+## What AI actually changed here
+
+AI coding tools are good at a lot of things. They're also overrated at a lot of things. But there's one specific area where they're genuinely transformative: generating code that follows well-documented, structured patterns.
+
+Accessibility patterns are exactly that. WAI-ARIA is a specification. Focus trapping has a defined algorithm. The keyboard interaction model for a dialog, a listbox, a combobox — these are written down in detail. A model trained on a large chunk of the web has seen these patterns implemented correctly hundreds of thousands of times.
+
+When you ask an AI to build an accessible dialog, it doesn't guess. It reaches for `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, focus management, Escape key handling, and backdrop click dismissal — because these are the canonical patterns, and it knows them.
+
+What you get is code you own, that does exactly what you need, with the accessibility guarantees baked in.
+
+<Callout type="tip" title="The key shift in thinking">
+You're not using AI to avoid writing code. You're using it to write code you couldn't have written as quickly or as correctly by yourself — and then *owning* that code completely.
+</Callout>
+
+Let's make this concrete.
+
+---
+
+## Building a real component: the Dialog
+
+The Dialog is a good test case because it's where component libraries earn their keep. A bad dialog — one that doesn't trap focus, doesn't restore focus on close, doesn't handle Escape, doesn't announce itself to screen readers — is a real accessibility failure.
+
+Here's a complete, accessible Dialog component generated and reviewed with AI assistance:
+
+```tsx
+// components/ui/Dialog.tsx
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
+
+interface DialogProps {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}
+
+export function Dialog({ open, onClose, title, description, children }: DialogProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Save focus target and restore on close
+  useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+      // Defer so the dialog is mounted before we focus it
+      requestAnimationFrame(() => dialogRef.current?.focus());
+    } else {
+      previousFocusRef.current?.focus();
+    }
+  }, [open]);
+
+  // Focus trap + Escape key
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const focusableSelectors = [
+        'button:not([disabled])',
+        '[href]',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(', ');
+
+      const focusable = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelectors) ?? []
+      );
+
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  // Prevent scroll on body while open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+        aria-hidden="true"
+        onClick={onClose}
+      />
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        role="presentation"
+      >
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dialog-title"
+          aria-describedby={description ? 'dialog-description' : undefined}
+          tabIndex={-1}
+          className="w-full max-w-md bg-surface border border-border rounded-2xl
+                     shadow-[0_20px_60px_rgba(0,0,0,0.5)] p-6 focus:outline-none"
+        >
+          <div className="flex items-start justify-between mb-1">
+            <h2 id="dialog-title" className="font-heading font-bold text-lg text-text">
+              {title}
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-1 -m-1 text-muted hover:text-text rounded transition-colors"
+              aria-label="Close dialog"
+            >
+              <X size={18} />
+            </button>
+          </div>
+          {description && (
+            <p id="dialog-description" className="text-sm text-secondary mb-4">
+              {description}
+            </p>
+          )}
+          {children}
+        </div>
+      </div>
+    </>
+  );
+}
+```
+
+Read through that. Every line is intentional:
+
+- `requestAnimationFrame` defers the `.focus()` call until after the dialog is mounted and painted, avoiding a race condition that breaks focus on some browsers
+- The focus trap correctly handles `Shift+Tab` going backwards through the cycle
+- `aria-describedby` is only added when there's a description — an empty ID reference is a WCAG violation
+- Scroll lock uses an inline style and cleans up on unmount rather than toggling a class, avoiding conflicts with other scroll-locking code on the page
+- The backdrop has `aria-hidden="true"` so screen readers don't announce it
+
+This is not boilerplate. These are specific decisions. The difference is that now you understand all of them, because you reviewed them — and they live in your codebase, not in `node_modules`.
+
+---
+
+## The accessibility argument, directly
+
+The most common pushback I hear is: *"What about accessibility? The library has years of testing across real assistive technologies. You can't replicate that."*
+
+It's a fair concern. Let me address it directly.
+
+Component libraries are good at accessibility because their maintainers deeply understand the ARIA spec and have tested against real screen readers. But here's the thing: that knowledge is now encoded in training data. When you prompt carefully and review the output against the ARIA Authoring Practices, you get components that follow the same specifications.
+
+The real risk with AI-generated components isn't that they'll miss the spec — it's that you'll accept output you haven't verified. That's a workflow problem, not a capability problem.
+
+<Callout type="warning" title="Don't skip the review">
+The worst outcome isn't AI writing an inaccessible component. It's you shipping one without checking. Always verify focus behavior manually, and run a screen reader pass on interactive components before they go to production.
+</Callout>
+
+Here's a quick checklist for reviewing AI-generated interactive components:
+
+- **Keyboard navigation**: can you use the component without a mouse?
+- **Focus visible**: is the focus indicator visible at all times?
+- **Focus management**: on open/close, does focus go somewhere meaningful?
+- **ARIA roles and properties**: `role`, `aria-expanded`, `aria-haspopup`, `aria-selected` — do they reflect the correct state?
+- **Screen reader test**: VoiceOver (Mac), NVDA or JAWS (Windows). Does the component announce correctly?
+
+This is not more work than understanding a library's accessibility limitations. It's the same work — just on code you own.
+
+---
+
+## A harder example: the Combobox
+
+If the Dialog is the component libraries' easiest argument, the Combobox is their strongest one. It's genuinely complex: a text input that filters a list, with keyboard navigation between the input and listbox, correct ARIA state, and selection that updates the input value.
+
+Here's the core keyboard interaction pattern — the part that usually gets wrong:
+
+```tsx
+const handleKeyDown = (e: React.KeyboardEvent) => {
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      setOpen(true);
+      setActiveIndex(i => Math.min(i + 1, filtered.length - 1));
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      setActiveIndex(i => {
+        if (i <= 0) { setOpen(false); return -1; }
+        return i - 1;
+      });
+      break;
+    case 'Enter':
+      if (open && activeIndex >= 0) {
+        e.preventDefault();
+        selectOption(filtered[activeIndex]);
+      }
+      break;
+    case 'Escape':
+      setOpen(false);
+      setActiveIndex(-1);
+      break;
+    case 'Tab':
+      // Commit the highlighted item on tab, or close
+      if (open && activeIndex >= 0) selectOption(filtered[activeIndex]);
+      setOpen(false);
+      break;
+  }
+};
+```
+
+And the ARIA wiring for the input:
+
+```tsx
+<input
+  role="combobox"
+  aria-expanded={open}
+  aria-controls="listbox-id"
+  aria-activedescendant={activeIndex >= 0 ? `option-${activeIndex}` : undefined}
+  aria-autocomplete="list"
+  autoComplete="off"
+  value={inputValue}
+  onChange={e => { setInputValue(e.target.value); setOpen(true); }}
+  onKeyDown={handleKeyDown}
+/>
+```
+
+That's not magic. It's the ARIA combobox pattern, written down. The `aria-activedescendant` pointing to the currently highlighted option is the key piece that screen readers use to announce the active item without moving DOM focus away from the input. AI knows this pattern. You can verify it in ten minutes against the spec.
+
+<Stat value="0" label="extra npm packages" description="A combobox written this way adds zero dependencies to your project." />
+
+---
+
+## Practical workflow
+
+Here's how I actually do this now.
+
+**1. Describe what you need precisely.** Vague prompts get vague components. Instead of "make me a dropdown", say: "Build a single-select dropdown using the ARIA Listbox pattern. It should support keyboard navigation (Arrow keys, Enter, Escape, Home, End), announce the selected value to screen readers, and close on outside click. Use Tailwind CSS for styles."
+
+**2. Review for the non-obvious stuff.** Assume the obvious is correct (the component renders, it looks right). Read specifically for: cleanup in `useEffect`, correct ARIA attribute values, what happens if the prop changes externally, what happens if the list is empty.
+
+**3. Test keyboard navigation yourself.** Tab to the component. Navigate with Arrow keys. Press Escape. Tab away. This takes two minutes and catches 90% of interaction problems.
+
+**4. Iterate specifically.** If something is wrong, say exactly what: "The `aria-activedescendant` isn't updating when I navigate with arrow keys. Here's the current code—" This is much faster than filing a bug with a library maintainer and waiting.
+
+**5. Own the result.** Paste the final component into your codebase. Add a comment if there's a non-obvious reason for something. Now it's yours.
+
+<AuthorNote>
+I keep a `/components/ui` folder with these generated components. They don't get touched unless there's a reason to change them. No `npm update`, no migration guides, no surprise breaking changes in a patch release.
+</AuthorNote>
+
+---
+
+## What I still use
+
+I want to be precise about what I'm arguing here, because it's easy to read this as "use no dependencies ever."
+
+That's not it.
+
+I still use **Tailwind CSS**. Maintaining a utility-first CSS system from scratch would be silly.
+
+I still use **Floating UI** for positioning tooltips and popovers. Calculating position relative to viewport edges, handling scroll offsets, flipping when there's not enough space — this is genuinely hard geometry and the library is small, focused, and stable. It's a utility, not an abstraction over my components.
+
+I still use **Framer Motion** for animations. CSS animations cover most cases, but layout animations and exit animations are legitimately awkward without it.
+
+What I don't use anymore: design system component libraries. Headless component libraries were already heading in the right direction — exposing behavior without enforcing markup — but even that's a dependency you can now eliminate.
+
+<Callout type="note" title="The Floating UI exception">
+If you're building popovers, tooltips, or dropdowns that need to position relative to a trigger, Floating UI is worth the dependency. It's ~4kb, has no peer dependencies, and solves a genuinely hard geometric problem. Not every package is worth removing.
+</Callout>
+
+---
+
+## The counterarguments
+
+**"This doesn't scale for large teams."**
+
+It scales differently. With a library, everyone gets the same components but fights the same limitations. With generated components, you build the components your product actually needs, document them once, and they live in your repo like any other code. A new engineer reads the component, not a third-party changelog.
+
+**"What about when browsers change behavior?"**
+
+You update the component. The same way a library maintainer would, but you do it immediately, for your specific use case, without waiting for a release.
+
+**"AI makes mistakes."**
+
+Yes. So does the intern who wrote that MUI wrapper in 2021 that's still in your codebase and nobody touches because they're afraid of breaking it. The difference is that you reviewed the AI output before shipping it, which is more than most teams do with npm packages they install.
+
+**"We're moving fast. We don't have time to generate components."**
+
+Generating and reviewing a Dialog takes about 15 minutes the first time. Migrating from Radix 1.x to 2.x across 40 components takes a sprint. Choose your investment.
+
+---
+
+## The real argument
+
+Component libraries were a workaround for a gap: the hard problems of accessibility and interaction were too complex for most teams to solve from scratch, so we outsourced them to specialists.
+
+That gap is closing. The knowledge of how to build accessible, robust UI components is now accessible in a completely different way — through tools that can generate the implementation for you, tuned to your exact use case, with no ongoing maintenance cost.
+
+The deal we made five years ago isn't the right deal anymore.
+
+You can ship components that follow the ARIA spec, handle every keyboard interaction, work correctly for screen reader users, and fit your design system exactly — without a single extra line in your `package.json`.
+
+<Quote author="Dan Abramov">
+Duplication is far cheaper than the wrong abstraction.
+</Quote>
+
+The right abstraction for your button isn't Radix's, or MUI's, or shadcn's. It's yours. And now you can afford to build it.
+
+---
+
+The last component library you'll ever install is the one you're already moving away from.

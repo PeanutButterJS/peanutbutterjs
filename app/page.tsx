@@ -27,18 +27,14 @@ export default function HomePage() {
       <header className="mb-14 flex flex-col items-start">
         {/* Spoon image */}
         <div className="relative">
-          <div
-            className="absolute inset-0 blur-3xl opacity-30 scale-90"
-            style={{ background: 'radial-gradient(ellipse, #C87820 0%, transparent 65%)' }}
-            aria-hidden
-          />
+
           <Image
-            src="/spoon.png"
+            src="/spoon1.png"
             alt="PeanutButterJS spoon"
-            width={100}
+            width={70}
             height={70}
             priority
-            className="relative drop-shadow-[0_8px_24px_rgba(200,120,32,0.25)]"
+            className="block drop-shadow-[0_8px_24px_rgba(200,120,32,0.25)]"
           />
         </div>
 

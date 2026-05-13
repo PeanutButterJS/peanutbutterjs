@@ -22,7 +22,7 @@ export default function HomePage() {
     .sort((a, b) => b - a);
 
   return (
-    <div className="max-w-[680px] mx-auto px-6 pt-16 pb-24">
+    <div className="max-w-[680px] mx-auto px-6 pt-10 pb-24">
       {/* Site intro */}
       <header className="mb-14 flex flex-col items-start">
         {/* Spoon image */}

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Sora, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
 const sora = Sora({
@@ -65,7 +64,6 @@ export default function RootLayout({
       className={`${sora.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-screen bg-background text-text antialiased">
-        <Navbar />
         {children}
         <Footer />
       </body>

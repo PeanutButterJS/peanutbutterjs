@@ -9,11 +9,7 @@ export default function Navbar() {
       >
 <span>peanutbutter<span className="text-primary">js</span></span>
       </Link>
-      <div className="flex items-center gap-5 text-sm text-muted">
-        <Link href="/blog" className="hover:text-text transition-colors">
-          All posts
-        </Link>
-      </div>
+
     </nav>
   );
 }

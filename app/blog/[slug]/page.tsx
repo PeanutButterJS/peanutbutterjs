@@ -53,11 +53,8 @@ export default async function BlogPostPage({ params }: PageProps) {
 
   return (
     <article className="max-w-[680px] mx-auto px-6 pt-10 pb-24">
-      <Link
-        href="/"
-        className="text-sm text-muted hover:text-text transition-colors mb-10 inline-block"
-      >
-        ← peanutbutterjs
+      <Link href="/" className="inline-flex items-center text-sm text-text hover:text-primary transition-colors mb-10">
+        ← peanutbutter<span className="text-primary">js</span>
       </Link>
 
       <header className="mb-10">

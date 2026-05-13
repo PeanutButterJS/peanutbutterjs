@@ -4,13 +4,13 @@
   --color-background: #0B1020;
   --color-surface: #12182B;
   --color-elevated: #18213A;
-  --color-primary: #7C5CFF;
+  --color-primary: #8B70FF;
   --color-accent: #41D1FF;
   --color-warm: #FFC16B;
   --color-border: #232A3D;
   --color-text: #B9C3CE;
   --color-secondary: #8B95A4;
-  --color-muted: #5C6877;
+  --color-muted: #768498;
 }
 
 @theme inline {

@@ -17,10 +17,10 @@ export function ProCon({
     <div className="my-6 grid sm:grid-cols-2 gap-4 not-prose">
       {/* Pros */}
       <div className="bg-[#4ADE80]/5 border border-[#4ADE80]/20 rounded-[14px] p-5">
-        <h4 className="text-sm font-semibold text-[#4ADE80] mb-3 flex items-center gap-2">
+        <p className="text-sm font-semibold text-[#4ADE80] mb-3 flex items-center gap-2">
           <Check size={14} />
           {prosTitle}
-        </h4>
+        </p>
         <ul className="space-y-2">
           {pros.map((item, i) => (
             <li key={i} className="flex items-start gap-2.5 text-sm text-secondary">
@@ -35,10 +35,10 @@ export function ProCon({
 
       {/* Cons */}
       <div className="bg-[#F87171]/5 border border-[#F87171]/20 rounded-[14px] p-5">
-        <h4 className="text-sm font-semibold text-[#F87171] mb-3 flex items-center gap-2">
+        <p className="text-sm font-semibold text-[#F87171] mb-3 flex items-center gap-2">
           <X size={14} />
           {consTitle}
-        </h4>
+        </p>
         <ul className="space-y-2">
           {cons.map((item, i) => (
             <li key={i} className="flex items-start gap-2.5 text-sm text-secondary">

@@ -64,7 +64,7 @@ export default function RootLayout({
       className={`${sora.variable} ${inter.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-screen bg-background text-text antialiased">
-        {children}
+        <main>{children}</main>
         <Footer />
       </body>
     </html>

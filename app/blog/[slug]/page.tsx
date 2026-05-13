@@ -5,7 +5,11 @@ import { MDXRemote } from 'next-mdx-remote/rsc';
 import rehypePrettyCode from 'rehype-pretty-code';
 import remarkGfm from 'remark-gfm';
 import { getPostBySlug, getPostSlugs } from '@/lib/posts';
+import { getViews } from '@/lib/views';
 import { mdxComponents } from '@/components/mdx';
+import { ViewTracker } from '@/components/blog/ViewTracker';
+
+export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -45,9 +49,10 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const views = await getViews(slug);
+
   return (
     <article className="max-w-[680px] mx-auto px-6 pt-10 pb-24">
-      {/* Back */}
       <Link
         href="/"
         className="text-sm text-muted hover:text-text transition-colors mb-10 inline-block"
@@ -55,7 +60,6 @@ export default async function BlogPostPage({ params }: PageProps) {
         ← peanutbutterjs
       </Link>
 
-      {/* Header */}
       <header className="mb-10">
         <h1 className="font-heading font-bold text-[2rem] leading-[1.2] text-text mb-4">
           {post.title}
@@ -68,10 +72,10 @@ export default async function BlogPostPage({ params }: PageProps) {
           })}
           {' · '}
           {post.readTime}
+          <ViewTracker slug={slug} initialViews={views} />
         </p>
       </header>
 
-      {/* Body */}
       <div className="prose">
         <MDXRemote
           source={post.content}

@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { getAllPosts } from '@/lib/posts';
 import type { Post } from '@/lib/types';
@@ -28,13 +27,11 @@ export default function HomePage() {
         {/* Spoon image */}
         <div className="relative">
 
-          <Image
+          <img
             src="/spoon1.png"
             alt="PeanutButterJS spoon"
-            width={70}
-            height={70}
-            priority
-            className="block drop-shadow-[0_8px_24px_rgba(200,120,32,0.25)]"
+            style={{ width: 70, height: 'auto' }}
+            className="drop-shadow-[0_8px_24px_rgba(200,120,32,0.25)]"
           />
         </div>
 
